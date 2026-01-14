@@ -27,12 +27,22 @@ def get_users():
     conn.close()
     return users
 
-def add_user(name, age):
+
+@app.route('/add_user', methods=['POST'])
+def add_user_route():                                                   # routing
+    name = request.form['name']
+    age = request.form['age']
+    add_user(name, age)
+    return redirect(url_for('frontend'))
+
+def add_user(name, age):            # Helper function to add a user to the database
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute('INSERT INTO users (name, age) VALUES (?, ?)', (name, age))
     conn.commit()
     conn.close()
+    return "User added successfully"
+
 
 def update_user(user_id, name, age):
     conn = sqlite3.connect('database.db')
@@ -51,7 +61,7 @@ def delete_user(user_id):
 @app.route('/')
 def index():
     users = get_users()
-    return render_template('frontend.html', users=users)  # Render the template with user data
+    return render_template('frontend.html')  # Render the template with user data
 
 @app.route('/add', methods=['POST'])
 def add():
@@ -61,20 +71,21 @@ def add():
     return redirect(url_for('index'))
 
 @app.route('/update/<int:user_id>', methods=['POST', 'GET'])
-def update(user_id):
+def update_route(user_id):
     if request.method == 'POST':
         name = request.form['name']
         age = request.form['age']
         update_user(user_id, name, age)
-        return redirect(url_for('index'))
+    return redirect(url_for('index'))
     
     # If GET request, fetch user data to pre-fill the form  
+def update_user_route(user_id):
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
     user = cursor.fetchone()
     conn.close()
-    return render_template('update.html', user=user)
+    return render_template('frontend.html', user=user)
 
 @app.route('/delete/<int:user_id>')
 def delete(user_id):
